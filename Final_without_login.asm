@@ -25,7 +25,6 @@
   menu db 13, '----------<STORE MANAGEMENT SYSTEM>----------',13,10, '------------------MAIN MENU-----------------', 13, 10, 10 ,'1. View Inventory',13,10,'2. Restock Item',13,10,'3. Sell Items',13,10, '4. Sort Items',13,10,'5. Sales Report',13,10,'0. Exit the Program',13,10,'$'
   invalid_input db 13,10,'Invalid input. Please try again.',13,10,'$'
   
-  ; CRUD labels
   ; view inventory
   inventory_header db 13,10, '----------<STORE MANAGEMENT SYSTEM>----------',13,10, '----------------<INVENTORY>-----------------',13,10,'ID',9,'Name',9,9, 'Quantity',9, 'Price',13,10,'$'
   inventory_label db '==============================================', 13, 10, 'Items that needs to be restock are displayed as RED!', 13, 10, '==============================================', 13, 10, '1. Back to Main Menu', 13, 10,  '2. Restock Items', 13, 10, '3. Sell Items', 13, 10 , 13, 10,'Enter your choice: $'
@@ -55,9 +54,74 @@
   ; misc
   user_choice db 13, 10, 'Enter your choice: $'
   user_quit db 13, 10, 'Thanks for using the program. See you again.','$'
+  ;Login form
+  LOGIN_MESSAGE DB 'Please enter your username and password:', '$'
+  USERNAME_PROMPT DB 13,10, 'Username: $'
+  PASSWORD_PROMPT DB 13,10, 'Password: $'
+  INPUT_USERNAME DB 20 DUP ('$')
+  INPUT_PASSWORD DB 20 DUP ('$')
+  USERNAME DB 'admin', '$'
+  PASSWORD DB '123', '$'
+  INVALID_MESSAGE DB 'Invalid username or password. Please try again.', '$'
+  VALID_MESSAGE DB 'Login successful. Welcome!', '$'
 
 .code
 main proc
+  ;Login Form
+  mov ax, @data
+    mov ds, ax
+
+    ; Display login message
+    mov ah, 09h
+    lea dx, LOGIN_MESSAGE
+    int 21h
+
+    ; Input username
+    mov ah, 09h
+    lea dx, USERNAME_PROMPT
+    int 21h
+
+    mov ah, 0ah
+    lea dx, INPUT_USERNAME
+    int 21h
+
+    ; Input password
+    mov ah, 09h
+    lea dx, PASSWORD_PROMPT
+    int 21h
+
+    mov ah, 0ah
+    lea dx, INPUT_PASSWORD
+    int 21h
+
+    ; Compare username and password
+    mov si, offset USERNAME
+    mov di, offset INPUT_USERNAME
+    mov cx, 20
+    repe cmpsb
+    jne INVALID_LOGIN
+
+    mov si, offset PASSWORD
+    mov di, offset INPUT_PASSWORD
+    mov cx, 20
+    repe cmpsb
+    jne INVALID_LOGIN
+
+    ; Display valid message
+    mov ah, 09h
+    lea dx, VALID_MESSAGE
+    int 21h
+
+INVALID_LOGIN:
+    ; Display invalid message
+    mov ah, 09h
+    lea dx, VALID_MESSAGE
+    int 21h
+
+
+  ;**********************************
+  ;***********Main Program***********
+  ;**********************************
   mov ax, @data ; set data segment
   mov ds, ax ; set data segment register
   

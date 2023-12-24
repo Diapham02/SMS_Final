@@ -1,17 +1,18 @@
 .model small
 .stack 100h
-.data     
+.data
   INVENTORY_SIZE equ 40
-  ;id, name, quantity, price, priority level
+  ; inventory on id, name, quantity, price, priority level
   inventory dw 0,1,2,3,4,5,6,7,8,9
-            db "Apples    ",  "Oranges   ", "Potatoes  ", "Tomatoes  ", "Onions    ", "Lemons    ", "Milk      ", "Eggs      ", "Bread     ", "Cheese    "
-            dw 10, 15, 8, 20, 5, 12, 7, 3, 6, 9, 4, 7, 3, 1, 2, 7, 5, 2, 7, 9, 1, 0, 1, 1, 2, 0, 1, 2, 0, 1, '$'  
+            db "Grapes    ", "Oranges   ", "Potatoes  ", "Tomatoes  ", "Onions    ", "Lemons    ", "Milk      ", "Eggs      ", "Bread     ", "Cheese    "
+            dw 10, 15, 8, 20, 5, 12, 7, 3, 6, 9, 4, 7, 3, 1, 2, 7, 5, 2, 7, 9, 1, 0, 1, 1, 2, 0, 1, 2, 0, 1, '$'
+  
   inventory_id_offset dw 0
-  inventory_name_offset dw 30
+  inventory_name_offset dw 20
   inventory_quantity_offset dw 120
   inventory_price_offset dw 140
-  sales dw 0,0,0,0,0,60,70,80,90,110,'$' ; quantity sold & total price
-  item_price dw 5, 10, 4, 2, 1, 4, 3, 5, 10, 15, '$'
+  sales dw 0,0,0,0,0,0,0,0,0,0,'$' ; quantity sold & total price
+  item_price dw 1, 2, 4, 6, 3, 2, 4, 1, 3, 1, '$'
   total_sales dw 0
   
   ; syntax formatting
@@ -21,37 +22,36 @@
   dotted db '**********************************************','$'
 
   ; main menu
-  menu db 13, '----------<Store Management System>----------',13,10, '------------------MAIN MENU-----------------', 13, 10, 10 ,'1. View Inventory' ,13,10,'2. Restock Item' ,13,10,'3. Sell Items' ,13,10, '4. Sort Items' ,13,10,'5. Sales Report' ,13,10,'0. Exit the Program' ,13,10,'$'
-  invalid_input db 13,10,'Invalid input. Please try again.' ,13,10,'$'
+  menu db 13, '----------<STORE MANAGEMENT SYSTEM>----------',13,10, '------------------MAIN MENU-----------------', 13, 10, 10 ,'1. View Inventory',13,10,'2. Restock Item',13,10,'3. Sell Items',13,10, '4. Sort Items',13,10,'5. Sales Report',13,10,'0. Exit the Program',13,10,'$'
+  invalid_input db 13,10,'Invalid input. Please try again.',13,10,'$'
   
-  ;View inventory   
-  inventory_header db 13,10, '----------<Store Management System>----------',13,10, '----------------<INVENTORY>-----------------',13,10,'ID',9,'Name',9,9, 'Quantity',9, 'Price',13,10,'$'
+  ; CRUD labels
+  ; view inventory
+  inventory_header db 13,10, '----------<STORE MANAGEMENT SYSTEM>----------',13,10, '----------------<INVENTORY>-----------------',13,10,'ID',9,'Name',9,9, 'Quantity',9, 'Price',13,10,'$'
   inventory_label db '==============================================', 13, 10, 'Items that needs to be restock are displayed as RED!', 13, 10, '==============================================', 13, 10, '1. Back to Main Menu', 13, 10,  '2. Restock Items', 13, 10, '3. Sell Items', 13, 10 , 13, 10,'Enter your choice: $'
   
   stock_amount dw ?
   stock_id dw ?
 
-  ; Add items
+  ; add items
   restock_label db '==============================================', 13, 10,9,9, 32,32,'RESTOCK ITEM', 13, 10, '==============================================', 13, 10, 'Select an item ID to restock: $'
   restock_amount_label db 13, 10, 'Enter the amount to restock (between 1-9): $'
-  restock_success db 13, 10, 'Item has been restocked successfully!', 13, 10, '$' 
-  
-  ; Sell items 
+  restock_success db 13, 10, 'Item has been restocked successfully!', 13, 10, '$'
+  ; sell items 
   sell_item_id_label db '==============================================', 13, 10,9,9, 32,32,'SELL ITEM', 13, 10, '==============================================', 13, 10,  'Enter the item ID to sell: $'
   sell_item_amount_label db 13, 10, 'Enter the amount to sell (between 1-9): $'
   sell_item_success db 13, 10, 'Item has been sold successfully!', 13, 10, '$'
   sell_item_fail db 13, 10, 'Item cannot be sold, not enough quantity!', 13, 10, '$'
 
-  ; Categorize inventory
+  ;categorize inventory
   sort_inventory_label db 13, '==============================================', 13, 10,9,'SORT INVENTORY BY STOCK COUNT', 13, 10, '==============================================', 13, 10, '1. Back to Main Menu', 13, 10, '2. In Stock', 13, 10, '3. Low/Out Of Stock', 13, 10, 13, 10, 'Enter your choice: $'
   low_stock_label db 13, 10, 'Items are Low On Stock!', 13, 10, '$'
   no_stock_label db 13, 10, 'Items are Out Of Stock!', 13, 10, '$'
   on_stock_label db 13, 10, 'Items are In Stock!', 13, 10, '$'
   
-  ; Sales
-  sales_header db 13,10, '-----------------------<Store Management System>--------------------',13,10, '----------------------------<SALES REPORT>-------------------------',13,10,'ID',9,'Name',9,9, 'Quantity Sold',9, 'Price/unit', 9, 'Total Earned',13,10,'$'
+  ;sales made
+  sales_header db 13,10, '-----------------------<STORE MANAGEMENT SYSTEM>--------------------',13,10, '----------------------------<SALES REPORT>-------------------------',13,10,'ID',9,'Name',9,9, 'Quantity Sold',9, 'Price/unit', 9, 'Total Earned',13,10,'$'
   sales_label db '=================================================================', 13, 10, 9,9,32,32,9,'SALES OF THE DAY', 13, 10, '=================================================================', 13, 10, '1. Back to Main Menu', 13, 10, '0. Exit the Program', 13, 10 , 13, 10,'Enter your choice: $'
-  
   ; misc
   user_choice db 13, 10, 'Enter your choice: $'
   user_quit db 13, 10, 'Thanks for using the program. See you again.','$'
@@ -117,8 +117,10 @@ main proc
   exit_program_interface:
     call clear_screen
     call exit_program
-    ret
-;*********** SUBROUTINE FUNCTION ************
+    ret                 
+    
+; *********** SUBROUTINE ************
+
 user_navigate:
   ; Code to navigate user
   lea dx, inventory_label
@@ -154,7 +156,7 @@ sales_navigate:
   je exit_program_interface
   
   jmp main
-  ret
+  ret    
   
 print_int:
   ; convert the word to a string and print it
@@ -194,11 +196,13 @@ print_string:
   push cx
   mov bx, dx ; set BX to the offset of the string
   mov cx, 10 ; set the length to 10 characters
+  
   print_loop:
-    mov dl, [bx] ; load character from memory
-    int 21h ; output the character
-    inc bx ; increment offset to next character
-    loop print_loop ; repeat until 10 characters are printed
+  mov dl, [bx] ; load character from memory
+  int 21h ; output the character
+  inc bx ; increment offset to next character
+  loop print_loop ; repeat until 10 characters are printed
+  
   print_done:
   pop cx ; restore registers
   pop bx
@@ -212,7 +216,8 @@ print_red_color:
   push bx
   push cx
   mov bx, dx ; set BX to the offset of the string
-  mov cx, 10 ; set the length to 10 characters
+  mov cx, 10 ; set the length to 10 characters 
+  
   print_loop3:
     mov dl, [bx] ; load character from memory
     mov ah, 09h
@@ -228,59 +233,69 @@ print_red_color:
   pop ax
   ret
 
-; ************** CRUD FUNCTIONS **************
+
+; **************Menu FUNCTIONS **************
 
 draw_menu:
-    ; Code to draw menu
-    call clear_screen
-    lea dx, menu
-    mov ah, 09h
-    int 21h
+  ; Code to draw menu
+  call clear_screen
+  lea dx, menu
+  mov ah, 09h
+  int 21h
   
-    lea dx, user_choice
-    mov ah, 09h
-    int 21h
-    ret
+  lea dx, user_choice
+  mov ah, 09h
+  int 21h
+  ret
 
 view_inventory:
-    ;view inventory 
-    mov dx, offset inventory_header
-    mov ah, 09
-    int 21h
+  ; code to view inventory 
+  mov dx, offset inventory_header
+  mov ah, 09
+  int 21h
+  
+  mov bp, 0
+  lea si, inventory
 
-    mov bp, 0
-    lea si, inventory
-
-loop_start:
+  loop_start:    
+  
     mov ax, [si] ; load inventory id into ax
     cmp ax, 10 ; check if end of array
     ja done 
-
     call print_int ; print the integer
+
     call print_tab
 
-    mov dx, offset inventory + 20 ; load inventory name into dx
-    add dx, bp ; add bp to dx to point to the next word
-    call print_string ; print the string
+    mov dx, offset inventory + 20 ; load inventory name into dx     
+    
+    add dx, bp ; add bp to dx to point to the next word  
+    
+    call print_string ; print the string   
+    
+    mov ax, [si + 120] ; load inventory stock into ax 
+    
+    call check_int ; check if stock is less than or equal to 5  
+    
 
-    mov ax, [si + 120] ; load inventory stock into ax
-    call check_int ; check if stock is less than or equal to 5
     call print_tab
+    
+    mov ax, [si + 120]  
+    
+    call print_int
 
-    call print_int ; print the stock
     call print_double_tab
-
-    mov ax, [si + 140] ; load inventory price into ax
-    call print_int ; print the price
-    call print_newline
-
+    
+    mov ax, [si + 140]
+    
+    call print_int
+    
     add bp, 10
-    add si, 2 ; increment SI to point to the next word
+    add si, 2 ; increment SI to point to the next word     
+    
+    call print_newline_return
     jmp loop_start ; repeat the loop for the next element
-
-done:
-ret
-
+  done:
+  ret
 
 restock_inventory:
   ; Code to restock item
@@ -562,7 +577,7 @@ sales_report:
     mov ax, [di]
     mul cx
     call print_int
-  
+
     call print_newline
 
     add bp, 10
@@ -571,8 +586,7 @@ sales_report:
     add di, 2
     jmp loop_start5 ; repeat the loop for the next element
   done5:
-    
-  ret
+    ret  ; Return from the function
 
 ; ************* HELPER FUNCTIONS ***************
 
@@ -626,7 +640,19 @@ print_newline:
   mov dl, 0ah
   mov ah, 02
   int 21h
-  ret
+  ret  
+  
+print_newline_return:
+  mov dl, 0Dh ; ASCII code of carriage return (CR)
+  mov ah, 02h ; Use DOS function to print character
+  int 21h
+
+  mov dl, 0Ah ; ASCII code of line feed (LF)
+  mov ah, 02h ; Use DOS function to print character
+  int 21h
+
+  ret  
+  
 print_asterisk:
   lea dx, dotted
   mov ah, 09h 

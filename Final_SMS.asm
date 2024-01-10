@@ -24,8 +24,8 @@
   INPUT_PASSWORD DB 20 DUP ('$')
   USERNAME DB 'admin', '$'
   PASSWORD DB '123', '$'
-  INVALID_MESSAGE DB 'Invalid username or password. Please try again.'
-  VALID_MESSAGE DB 13,10, 'Login successful. Welcome!'
+  INVALID_MESSAGE DB 'Invalid username or password. Please try again.', '$'
+  VALID_MESSAGE DB 13,10, 'Login successful. Welcome!', '$'
   
   ;Formatting
   crlf db 13,10,'$'

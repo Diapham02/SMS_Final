@@ -1,31 +1,43 @@
 .model small
 .stack 100h
 .data
+
+  ; Declear inventory on id, name, quantity, price, priority level
   INVENTORY_SIZE equ 40
-  ; inventory on id, name, quantity, price, priority level
   inventory dw 0,1,2,3,4,5,6,7,8,9
             db "Grapes    ", "Oranges   ", "Potatoes  ", "Tomatoes  ", "Onions    ", "Lemons    ", "Milk      ", "Eggs      ", "Bread     ", "Cheese    "
             dw 10, 15, 8, 20, 5, 12, 7, 3, 6, 9, 4, 7, 3, 1, 2, 7, 5, 2, 7, 9, 1, 0, 1, 1, 2, 0, 1, 2, 0, 1, '$'
-  
+    
   inventory_id_offset dw 0
   inventory_name_offset dw 20
   inventory_quantity_offset dw 120
   inventory_price_offset dw 140
-  sales dw 0,0,0,0,0,0,0,0,0,0,'$' ; quantity sold & total price
+  sales dw 0,0,0,0,0,0,0,0,0,0, '$' ; Quantity sold & total price
   item_price dw 1, 2, 4, 6, 3, 2, 4, 1, 3, 1, '$'
-  total_sales dw 0
+  total_sales dw 0  
+                                  
+  ;Login form
+  LOGIN_MESSAGE DB 'Please enter your username and password below: ', '$'
+  USERNAME_PROMPT DB 13,10, 'Username: $'
+  PASSWORD_PROMPT DB 13,10, 'Password: $'
+  INPUT_USERNAME DB 20 DUP ('$')
+  INPUT_PASSWORD DB 20 DUP ('$')
+  USERNAME DB 'admin', '$'
+  PASSWORD DB '123', '$'
+  INVALID_MESSAGE DB 'Invalid username or password. Please try again.'
+  VALID_MESSAGE DB 13,10, 'Login successful. Welcome!'
   
-  ; syntax formatting
+  ;Formatting
   crlf db 13,10,'$'
   sline db 13,10, '----------------------------------------------' ,'$'
   dline db 13,10, '==============================================' ,'$'
   dotted db '**********************************************','$'
 
-  ; main menu
+  ;Main menu
   menu db 13, '----------<STORE MANAGEMENT SYSTEM>----------',13,10, '------------------MAIN MENU-----------------', 13, 10, 10 ,'1. View Inventory',13,10,'2. Restock Item',13,10,'3. Sell Items',13,10, '4. Sort Items',13,10,'5. Sales Report',13,10,'0. Exit the Program',13,10,'$'
   invalid_input db 13,10,'Invalid input. Please try again.',13,10,'$'
   
-  ; view inventory
+  ;View inventory
   inventory_header db 13,10, '----------<STORE MANAGEMENT SYSTEM>----------',13,10, '----------------<INVENTORY>-----------------',13,10,'ID',9,'Name',9,9, 'Quantity',9, 'Price',13,10,'$'
   inventory_label db '==============================================', 13, 10, 'Items that needs to be restock are displayed as RED!', 13, 10, '==============================================', 13, 10, '1. Back to Main Menu', 13, 10,  '2. Restock Items', 13, 10, '3. Sell Items', 13, 10 , 13, 10,'Enter your choice: $'
   
@@ -51,27 +63,56 @@
   ;sales made
   sales_header db 13,10, '-----------------------<STORE MANAGEMENT SYSTEM>--------------------',13,10, '----------------------------<SALES REPORT>-------------------------',13,10,'ID',9,'Name',9,9, 'Quantity Sold',9, 'Price/unit', 9, 'Total Earned',13,10,'$'
   sales_label db '=================================================================', 13, 10, 9,9,32,32,9,'SALES OF THE DAY', 13, 10, '=================================================================', 13, 10, '1. Back to Main Menu', 13, 10, '0. Exit the Program', 13, 10 , 13, 10,'Enter your choice: $'
-  ; misc
+  ;misc
   user_choice db 13, 10, 'Enter your choice: $'
-  user_quit db 13, 10, 'Thanks for using the program. See you again.','$'
-  ;Login form
-  LOGIN_MESSAGE DB 'Please enter your username and password:', '$'
-  USERNAME_PROMPT DB 13,10, 'Username: $'
-  PASSWORD_PROMPT DB 13,10, 'Password: $'
-  INPUT_USERNAME DB 20 DUP ('$')
-  INPUT_PASSWORD DB 20 DUP ('$')
-  USERNAME DB 'admin', '$'
-  PASSWORD DB '123', '$'
-  INVALID_MESSAGE DB 'Invalid username or password. Please try again.', '$'
-  VALID_MESSAGE DB 'Login successful. Welcome!', '$'
-
+  user_quit db 13, 10, 'Thanks for using the program. See you again.','$' 
+      
+  
+  
 .code
-main proc
+main proc 
+  ;**********************************
+  ;***********Main Program***********
+  ;**********************************
+  mov ax, @data ; set data segment
+  mov ds, ax ; set data segment register     
+  
   ;Login Form
-  mov ax, @data
-    mov ds, ax
+  call login_form  
+  
+  ; Main loop
+main_loop:
+  ;Display the menu
+  call draw_menu
+  
+  ;Prompt user to enter choice
+  mov ah, 01h ; read character
+  int 21h
+  
+  ;Check user input
+  cmp al, '1'
+  je view_inventory_interface
+  
+  cmp al, '2'
+  je restock_inventory_interface
+  
+  cmp al, '3'
+  je sales_inventory_interface
 
-    ; Display login message
+  cmp al, '4'
+  je sort_inventory_interface
+  
+  cmp al, '5'
+  je sales_report_interface
+  
+  cmp al, '0'
+  je exit_program_interface
+
+  jmp main_loop
+
+; *************    Login form       *********      
+login_form:
+    
     mov ah, 09h
     lea dx, LOGIN_MESSAGE
     int 21h
@@ -106,11 +147,13 @@ main proc
     mov cx, 20
     repe cmpsb
     jne INVALID_LOGIN
+    
 
     ; Display valid message
     mov ah, 09h
     lea dx, VALID_MESSAGE
     int 21h
+    jmp main_loop
 
 INVALID_LOGIN:
     ; Display invalid message
@@ -118,41 +161,7 @@ INVALID_LOGIN:
     lea dx, VALID_MESSAGE
     int 21h
 
-
-  ;**********************************
-  ;***********Main Program***********
-  ;**********************************
-  mov ax, @data ; set data segment
-  mov ds, ax ; set data segment register
-  
-  ;Display the menu
-  call draw_menu
-  
-  ;Prompt user to enter choice
-  mov ah, 01h ; read character
-  int 21h
-  
-  ;Check user input
-  cmp al, '1'
-  je view_inventory_interface
-  
-  cmp al, '2'
-  je restock_inventory_interface
-  
-  cmp al, '3'
-  je sales_inventory_interface
-
-  cmp al, '4'
-  je sort_inventory_interface
-  
-  cmp al, '5'
-  je sales_report_interface
-  
-  cmp al, '0'
-  je exit_program_interface
-
-  jmp main
-
+    jmp main_loop
 ; ************* INTERFACE FUNCTIONS **********
 
   view_inventory_interface:
@@ -191,23 +200,24 @@ user_navigate:
   mov ah, 09h
   int 21h
 
-  mov ah, 01h ; read character
+  mov ah, 01h;read character
   int 21h
 
-  cmp al, '0'
+  cmp bl, '0'
   je exit_program_interface
 
-  cmp al, '1'
-  je main
+  cmp bl, '1'
+  je main_loop
 
-  cmp al, '2'
+  cmp bl, '2'
   je restock_inventory_interface
   
-  cmp al, '3'
+  cmp bl, '3'
   je sales_inventory_interface
   
-  jmp main
-  ret
+  jmp main_loop
+  ret  
+  
 sales_navigate:
   lea dx, sales_label
   mov ah, 09h
@@ -219,7 +229,7 @@ sales_navigate:
   cmp al, '0'
   je exit_program_interface
   
-  jmp main
+  jmp main_loop
   ret    
   
 print_int:
@@ -313,7 +323,7 @@ draw_menu:
   ret
 
 view_inventory:
-  ; code to view inventory 
+  ;Code to view inventory 
   mov dx, offset inventory_header
   mov ah, 09
   int 21h
@@ -340,7 +350,6 @@ view_inventory:
     
     call check_int ; check if stock is less than or equal to 5  
     
-
     call print_tab
     
     mov ax, [si + 120]  
@@ -485,16 +494,16 @@ sort_inventory:
   
   mov ah, 01h 
   int 21h 
-   
+  
+  cmp al, '1'
+  call main_loop 
+  
   cmp al, '2'
   je in_stock_prompt
   
   cmp al, '3' 
   je low_in_stock_prompt 
   
-  cmp al, '1'
-  call main
-
   ret
 
 in_stock_prompt:

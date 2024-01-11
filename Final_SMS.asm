@@ -1,736 +1,744 @@
-.model small
-.stack 100h
-.data
+.MODEL SMALL
+.STACK 100H
+.DATA
 
-  ; Declear inventory on id, name, quantity, price, priority level
-  INVENTORY_SIZE equ 40
-  inventory dw 0,1,2,3,4,5,6,7,8,9
-            db "Grapes    ", "Oranges   ", "Potatoes  ", "Tomatoes  ", "Onions    ", "Lemons    ", "Milk      ", "Eggs      ", "Bread     ", "Cheese    "
-            dw 10, 15, 8, 20, 5, 12, 7, 3, 6, 9, 4, 7, 3, 1, 2, 7, 5, 2, 7, 9, 1, 0, 1, 1, 2, 0, 1, 2, 0, 1, '$'
+  ; DECLEAR INVENTORY ON ID, NAME, QUANTITY, PRICE, PRIORITY LEVEL
+  INVENTORY_SIZE EQU 40
+  INVENTORY DW 0,1,2,3,4,5,6,7,8,9
+            DB "SNACK     ", "APPLE     ", "POTATOES  ", "TOMATOES  ", "ONIONS    ", "LEMONS    ", "MILK      ", "EGGS      ", "BREAD     ", "CHEESE    "
+            DW 10, 15, 8, 20, 5, 12, 7, 3, 6, 9, 4, 7, 3, 1, 2, 7, 5, 2, 7, 9, 1, 0, 1, 1, 2, 0, 1, 2, 0, 1, '$'
     
-  inventory_id_offset dw 0
-  inventory_name_offset dw 20
-  inventory_quantity_offset dw 120
-  inventory_price_offset dw 140
-  sales dw 0,0,0,0,0,0,0,0,0,0, '$' ; Quantity sold & total price
-  item_price dw 1, 2, 4, 6, 3, 2, 4, 1, 3, 1, '$'
-  total_sales dw 0  
+  INVENTORY_ID_OFFSET DW 0
+  INVENTORY_NAME_OFFSET DW 20
+  INVENTORY_QUANTITY_OFFSET DW 120
+  INVENTORY_PRICE_OFFSET DW 140
+  SALES DW 0,0,0,0,0,0,0,0,0,0, '$' ; QUANTITY SOLD & TOTAL PRICE
+  ITEM_PRICE DW 1, 2, 4, 6, 3, 2, 4, 1, 3, 1, '$'
+  TOTAL_SALES DW 0  
                                   
-  ;Login form
-  LOGIN_MESSAGE DB 'Please enter your username and password below: ', '$'
-  USERNAME_PROMPT DB 13,10, 'Username: $'
-  PASSWORD_PROMPT DB 13,10, 'Password: $'
+  ;LOGIN FORM
+  LOGIN_MESSAGE DB 'PLEASE ENTER YOUR USERNAME AND PASSWORD BELOW: ', '$'
+  USERNAME_PROMPT DB 13,10, 'USERNAME: $'
+  PASSWORD_PROMPT DB 13,10, 'PASSWORD: $'
   INPUT_USERNAME DB 20 DUP ('$')
   INPUT_PASSWORD DB 20 DUP ('$')
-  USERNAME DB 'admin', '$'
+  USERNAME DB 'ADMIN', '$'
   PASSWORD DB '123', '$'
-  INVALID_MESSAGE DB 'Invalid username or password. Please try again.', '$'
-  VALID_MESSAGE DB 13,10, 'Login successful. Welcome!', '$'
+  INVALID_MESSAGE DB 13,10, 'INVALID USERNAME OR PASSWORD. PLEASE TRY AGAIN.', '$'
+  VALID_MESSAGE DB 13,10, 'LOGIN SUCCESSFUL. WELCOME!', '$'
   
-  ;Formatting
-  crlf db 13,10,'$'
-  sline db 13,10, '----------------------------------------------' ,'$'
-  dline db 13,10, '==============================================' ,'$'
-  dotted db '**********************************************','$'
+  ;FORMATTING
+  CRLF DB 13,10,'$'
+  SLINE DB 13,10, '----------------------------------------------' ,'$'
+  DLINE DB 13,10, '==============================================' ,'$'
+  DOTTED DB '**********************************************','$'
 
-  ;Main menu
-  menu db 13, '----------<STORE MANAGEMENT SYSTEM>----------',13,10, '------------------MAIN MENU-----------------', 13, 10, 10 ,'1. View Inventory',13,10,'2. Restock Item',13,10,'3. Sell Items',13,10, '4. Sort Items',13,10,'5. Sales Report',13,10,'0. Exit the Program',13,10,'$'
-  invalid_input db 13,10,'Invalid input. Please try again.',13,10,'$'
+  ;MAIN MENU
+  MENU DB 13, '----------<STORE MANAGEMENT SYSTEM>----------',13,10, '------------------MAIN MENU-----------------', 13, 10, 10 ,'1. VIEW INVENTORY',13,10,'2. RESTOCK ITEM',13,10,'3. SELL ITEMS',13,10, '4. SORT ITEMS',13,10,'5. SALES REPORT',13,10,'0. EXIT THE PROGRAM',13,10,'$'
+  INVALID_INPUT DB 13,10,'INVALID INPUT. PLEASE TRY AGAIN.',13,10,'$'
   
-  ;View inventory
-  inventory_header db 13,10, '----------<STORE MANAGEMENT SYSTEM>----------',13,10, '----------------<INVENTORY>-----------------',13,10,'ID',9,'Name',9,9, 'Quantity',9, 'Price',13,10,'$'
-  inventory_label db '==============================================', 13, 10, 'Items that needs to be restock are displayed as RED!', 13, 10, '==============================================', 13, 10, '1. Back to Main Menu', 13, 10,  '2. Restock Items', 13, 10, '3. Sell Items', 13, 10 , 13, 10,'Enter your choice: $'
+  ;VIEW INVENTORY
+  INVENTORY_HEADER DB 13,10, '----------<STORE MANAGEMENT SYSTEM>----------',13,10, '----------------<INVENTORY>-----------------',13,10,'ID',9,'NAME',9,9, 'QUANTITY',9, 'PRICE',13,10,'$'
+  INVENTORY_LABEL DB '==============================================', 13, 10, 'ITEMS THAT NEEDS TO BE RESTOCK ARE DISPLAYED AS RED!', 13, 10, '==============================================', 13, 10, '1. BACK TO MAIN MENU', 13, 10,  '2. RESTOCK ITEMS', 13, 10, '3. SELL ITEMS', 13, 10 , 13, 10,'ENTER YOUR CHOICE: $'
   
-  stock_amount dw ?
-  stock_id dw ?
+  STOCK_AMOUNT DW ?
+  STOCK_ID DW ?
 
-  ; add items
-  restock_label db '==============================================', 13, 10,9,9, 32,32,'RESTOCK ITEM', 13, 10, '==============================================', 13, 10, 'Select an item ID to restock: $'
-  restock_amount_label db 13, 10, 'Enter the amount to restock (between 1-9): $'
-  restock_success db 13, 10, 'Item has been restocked successfully!', 13, 10, '$'
-  ; sell items 
-  sell_item_id_label db '==============================================', 13, 10,9,9, 32,32,'SELL ITEM', 13, 10, '==============================================', 13, 10,  'Enter the item ID to sell: $'
-  sell_item_amount_label db 13, 10, 'Enter the amount to sell (between 1-9): $'
-  sell_item_success db 13, 10, 'Item has been sold successfully!', 13, 10, '$'
-  sell_item_fail db 13, 10, 'Item cannot be sold, not enough quantity!', 13, 10, '$'
+  ; ADD ITEMS
+  RESTOCK_LABEL DB '==============================================', 13, 10,9,9, 32,32,'RESTOCK ITEM', 13, 10, '==============================================', 13, 10, 'SELECT AN ITEM ID TO RESTOCK: $'
+  RESTOCK_AMOUNT_LABEL DB 13, 10, 'ENTER THE AMOUNT TO RESTOCK (BETWEEN 1-9): $'
+  RESTOCK_SUCCESS DB 13, 10, 'ITEM HAS BEEN RESTOCKED SUCCESSFULLY!', 13, 10, '$'
+  ; SELL ITEMS 
+  SELL_ITEM_ID_LABEL DB '==============================================', 13, 10,9,9, 32,32,'SELL ITEM', 13, 10, '==============================================', 13, 10,  'ENTER THE ITEM ID TO SELL: $'
+  SELL_ITEM_AMOUNT_LABEL DB 13, 10, 'ENTER THE AMOUNT TO SELL (BETWEEN 1-9): $'
+  SELL_ITEM_SUCCESS DB 13, 10, 'ITEM HAS BEEN SOLD SUCCESSFULLY!', 13, 10, '$'
+  SELL_ITEM_FAIL DB 13, 10, 'ITEM CANNOT BE SOLD, NOT ENOUGH QUANTITY!', 13, 10, '$'
 
-  ;categorize inventory
-  sort_inventory_label db 13, '==============================================', 13, 10,9,'SORT INVENTORY BY STOCK COUNT', 13, 10, '==============================================', 13, 10, '1. Back to Main Menu', 13, 10, '2. In Stock', 13, 10, '3. Low/Out Of Stock', 13, 10, 13, 10, 'Enter your choice: $'
-  low_stock_label db 13, 10, 'Items are Low On Stock!', 13, 10, '$'
-  no_stock_label db 13, 10, 'Items are Out Of Stock!', 13, 10, '$'
-  on_stock_label db 13, 10, 'Items are In Stock!', 13, 10, '$'
+  ;CATEGORIZE INVENTORY
+  SORT_INVENTORY_LABEL DB 13, '==============================================', 13, 10,9,'SORT INVENTORY BY STOCK COUNT', 13, 10, '==============================================', 13, 10, '1. BACK TO MAIN MENU', 13, 10, '2. IN STOCK', 13, 10, '3. LOW/OUT OF STOCK', 13, 10, 13, 10, 'ENTER YOUR CHOICE: $'
+  LOW_STOCK_LABEL DB 13, 10, 'ITEMS ARE LOW ON STOCK!', 13, 10, '$'
+  NO_STOCK_LABEL DB 13, 10, 'ITEMS ARE OUT OF STOCK!', 13, 10, '$'
+  ON_STOCK_LABEL DB 13, 10, 'ITEMS ARE IN STOCK!', 13, 10, '$'
   
-  ;sales made
-  sales_header db 13,10, '-----------------------<STORE MANAGEMENT SYSTEM>--------------------',13,10, '----------------------------<SALES REPORT>-------------------------',13,10,'ID',9,'Name',9,9, 'Quantity Sold',9, 'Price/unit', 9, 'Total Earned',13,10,'$'
-  sales_label db '=================================================================', 13, 10, 9,9,32,32,9,'SALES OF THE DAY', 13, 10, '=================================================================', 13, 10, '1. Back to Main Menu', 13, 10, '0. Exit the Program', 13, 10 , 13, 10,'Enter your choice: $'
-  ;misc
-  user_choice db 13, 10, 'Enter your choice: $'
-  user_quit db 13, 10, 'Thanks for using the program. See you again.','$' 
+  ;SALES MADE
+  SALES_HEADER DB 13,10, '-----------------------<STORE MANAGEMENT SYSTEM>--------------------',13,10, '----------------------------<SALES REPORT>-------------------------',13,10,'ID',9,'NAME',9,9, 'QUANTITY SOLD',9, 'PRICE/UNIT', 9, 'TOTAL EARNED',13,10,'$'
+  SALES_LABEL DB '=================================================================', 13, 10, 9,9,32,32,9,'SALES OF THE DAY', 13, 10, '=================================================================', 13, 10, '1. BACK TO MAIN MENU', 13, 10, '0. EXIT THE PROGRAM', 13, 10 , 13, 10,'ENTER YOUR CHOICE: $'
+  ;MISC
+  USER_CHOICE DB 13, 10, 'ENTER YOUR CHOICE: $'
+  USER_QUIT DB 13, 10, 'THANKS FOR USING THE PROGRAM. SEE YOU AGAIN.','$' 
       
   
   
-.code
-main proc 
+.CODE
+MAIN PROC 
   ;**********************************
-  ;***********Main Program***********
+  ;***********MAIN PROGRAM***********
   ;**********************************
-  mov ax, @data ; set data segment
-  mov ds, ax ; set data segment register     
+  MOV AX, @DATA ; SET DATA SEGMENT
+  MOV DS, AX ; SET DATA SEGMENT REGISTER     
   
-  ;Login Form
-  call login_form  
+  ;LOGIN FORM
+  CALL LOGIN_FORM  
   
-  ; Main loop
-main_loop:
-  ;Display the menu
-  call draw_menu
+  ;MAIN LOOP
+MAIN_LOOP:
+  ;DISPLAY THE MENU
+  CALL DRAW_MENU
   
-  ;Prompt user to enter choice
-  mov ah, 01h ; read character
-  int 21h
+  ;PROMPT USER TO ENTER CHOICE
+  MOV AH, 01H ; READ CHARACTER
+  INT 21H
   
-  ;Check user input
-  cmp al, '1'
-  je view_inventory_interface
+  ;CHECK USER INPUT
+  CMP AL, '1'
+  JE VIEW_INVENTORY_INTERFACE
   
-  cmp al, '2'
-  je restock_inventory_interface
+  CMP AL, '2'
+  JE RESTOCK_INVENTORY_INTERFACE
   
-  cmp al, '3'
-  je sales_inventory_interface
+  CMP AL, '3'
+  JE SALES_INVENTORY_INTERFACE
 
-  cmp al, '4'
-  je sort_inventory_interface
+  CMP AL, '4'
+  JE SORT_INVENTORY_INTERFACE
   
-  cmp al, '5'
-  je sales_report_interface
+  CMP AL, '5'
+  JE SALES_REPORT_INTERFACE
   
-  cmp al, '0'
-  je exit_program_interface
+  CMP AL, '0'
+  JE EXIT_PROGRAM_INTERFACE
 
-  jmp main_loop
+  JMP MAIN_LOOP
 
-; *************    Login form       *********      
-login_form:
+; *************    LOGIN FORM       *********      
+LOGIN_FORM:
     
-    mov ah, 09h
-    lea dx, LOGIN_MESSAGE
-    int 21h
+    MOV AH, 09H
+    LEA DX, LOGIN_MESSAGE
+    INT 21H
 
-    ; Input username
-    mov ah, 09h
-    lea dx, USERNAME_PROMPT
-    int 21h
+    ; INPUT USERNAME
+    MOV AH, 09H
+    LEA DX, USERNAME_PROMPT
+    INT 21H
 
-    mov ah, 0ah
-    lea dx, INPUT_USERNAME
-    int 21h
+    MOV AH, 0AH
+    LEA DX, INPUT_USERNAME
+    INT 21H
 
-    ; Input password
-    mov ah, 09h
-    lea dx, PASSWORD_PROMPT
-    int 21h
+    ; INPUT PASSWORD
+    MOV AH, 09H
+    LEA DX, PASSWORD_PROMPT
+    INT 21H
 
-    mov ah, 0ah
-    lea dx, INPUT_PASSWORD
-    int 21h
-
-    ; Compare username and password
-    mov si, offset USERNAME
-    mov di, offset INPUT_USERNAME
-    mov cx, 20
-    repe cmpsb
-    jne INVALID_LOGIN
-
-    mov si, offset PASSWORD
-    mov di, offset INPUT_PASSWORD
-    mov cx, 20
-    repe cmpsb
-    jne INVALID_LOGIN
+    MOV AH, 0AH
+    LEA DX, INPUT_PASSWORD
+    INT 21H
     
+    ; COMPARE USERNAME AND PASSWORD
+MOV SI, OFFSET USERNAME
+MOV DI, OFFSET INPUT_USERNAME
+MOV CX, 20
+CMP_LOOP_USER:
+    CMPSB
+    JNE INVALID_LOGIN
+    LOOP CMP_LOOP_USER
 
-    ; Display valid message
-    mov ah, 09h
-    lea dx, VALID_MESSAGE
-    int 21h
-    jmp main_loop
+MOV SI, OFFSET PASSWORD
+MOV DI, OFFSET INPUT_PASSWORD
+MOV CX, 20
+CMP_LOOP_PASS:
+    CMPSB
+    JNE INVALID_LOGIN
+    LOOP CMP_LOOP_PASS
+
+; DISPLAY VALID MESSAGE
+MOV AH, 09H
+LEA DX, VALID_MESSAGE
+INT 21H
+JMP MAIN_LOOP       
+RET
 
 INVALID_LOGIN:
-    ; Display invalid message
-    mov ah, 09h
-    lea dx, VALID_MESSAGE
-    int 21h
+; DISPLAY INVALID MESSAGE
+MOV AH, 09H
+LEA DX, INVALID_MESSAGE
+INT 21H
 
-    jmp main_loop
+JMP MAIN_LOOP 
+
 ; ************* INTERFACE FUNCTIONS **********
 
-  view_inventory_interface:
-    call clear_screen
-    call view_inventory
-    call user_navigate
-    ret
-  restock_inventory_interface:
-    call clear_screen
-    call view_inventory
-    call restock_inventory
-    ret
-  sales_inventory_interface:
-    call clear_screen
-    call view_inventory
-    call sales_inventory
-    ret
-  sort_inventory_interface:
-    call sort_inventory
-    call user_navigate
-    ret
-  sales_report_interface:
-    call sales_report
-    call sales_navigate
-    ret
-  exit_program_interface:
-    call clear_screen
-    call exit_program
-    ret                 
+  VIEW_INVENTORY_INTERFACE:
+    CALL CLEAR_SCREEN
+    CALL VIEW_INVENTORY
+    CALL USER_NAVIGATE
+    RET
+  RESTOCK_INVENTORY_INTERFACE:
+    CALL CLEAR_SCREEN
+    CALL VIEW_INVENTORY
+    CALL RESTOCK_INVENTORY
+    RET
+  SALES_INVENTORY_INTERFACE:
+    CALL CLEAR_SCREEN
+    CALL VIEW_INVENTORY
+    CALL SALES_INVENTORY
+    RET
+  SORT_INVENTORY_INTERFACE:
+    CALL SORT_INVENTORY
+    CALL USER_NAVIGATE
+    RET
+  SALES_REPORT_INTERFACE:
+    CALL SALES_REPORT
+    CALL SALES_NAVIGATE
+    RET
+  EXIT_PROGRAM_INTERFACE:
+    CALL CLEAR_SCREEN
+    CALL EXIT_PROGRAM
+    RET                 
     
 ; *********** SUBROUTINE ************
 
-user_navigate:
-  ; Code to navigate user
-  lea dx, inventory_label
-  mov ah, 09h
-  int 21h
+USER_NAVIGATE:
+  ; CODE TO NAVIGATE USER
+  LEA DX, INVENTORY_LABEL
+  MOV AH, 09H
+  INT 21H
 
-  mov ah, 01h;read character
-  int 21h
+  MOV AH, 01H;READ CHARACTER
+  INT 21H
 
-  cmp bl, '0'
-  je exit_program_interface
+  CMP AL, '0'
+  JE EXIT_PROGRAM_INTERFACE
 
-  cmp bl, '1'
-  je main_loop
+  CMP AL, '1'
+  JE MAIN_LOOP
 
-  cmp bl, '2'
-  je restock_inventory_interface
+  CMP AL, '2'
+  JE RESTOCK_INVENTORY_INTERFACE
   
-  cmp bl, '3'
-  je sales_inventory_interface
+  CMP AL, '3'
+  JE SALES_INVENTORY_INTERFACE
   
-  jmp main_loop
-  ret  
+  JMP MAIN_LOOP
+  RET  
   
-sales_navigate:
-  lea dx, sales_label
-  mov ah, 09h
-  int 21h
+SALES_NAVIGATE:
+  LEA DX, SALES_LABEL
+  MOV AH, 09H
+  INT 21H
 
-  mov ah, 01h ; read character
-  int 21h
+  MOV AH, 01H ; READ CHARACTER
+  INT 21H
 
-  cmp al, '0'
-  je exit_program_interface
+  CMP AL, '0'
+  JE EXIT_PROGRAM_INTERFACE
   
-  jmp main_loop
-  ret    
+  JMP MAIN_LOOP
+  RET    
   
-print_int:
-  ; convert the word to a string and print it
-  push bx ; save BX on the stack
-  mov bx, 10 ; set BX to 10 (divisor)
-  xor cx, cx ; clear CX (counter)
-  convert_loop:
-    xor dx, dx ; clear the high byte of DX
-    div bx ; divide AX by BX
-    add dl, '0' ; convert the remainder to ASCII
-    push dx ; save the digit on the stack
-    inc cx ; increment the counter
-    cmp ax, 0 ; check if AX is zero
-    jne convert_loop ; if not, repeat the loop
-  print_loop2:
-    pop dx ; get the next digit from the stack
-    mov ah, 02 ; write character
-    int 21h ; print the digit
-    dec cx ; decrement the counter
-    cmp cx, 0 ; check if all digits have been printed
-    jne print_loop2 ; if not, repeat the loop
-    pop bx ; restore BX from the stack
-    ret
+PRINT_INT:
+  ; CONVERT THE WORD TO A STRING AND PRINT IT
+  PUSH BX ; SAVE BX ON THE STACK
+  MOV BX, 10 ; SET BX TO 10 (DIVISOR)
+  XOR CX, CX ; CLEAR CX (COUNTER)
+  CONVERT_LOOP:
+    XOR DX, DX ; CLEAR THE HIGH BYTE OF DX
+    DIV BX ; DIVIDE AX BY BX
+    ADD DL, '0' ; CONVERT THE REMAINDER TO ASCII
+    PUSH DX ; SAVE THE DIGIT ON THE STACK
+    INC CX ; INCREMENT THE COUNTER
+    CMP AX, 0 ; CHECK IF AX IS ZERO
+    JNE CONVERT_LOOP ; IF NOT, REPEAT THE LOOP
+  PRINT_LOOP2:
+    POP DX ; GET THE NEXT DIGIT FROM THE STACK
+    MOV AH, 02 ; WRITE CHARACTER
+    INT 21H ; PRINT THE DIGIT
+    DEC CX ; DECREMENT THE COUNTER
+    CMP CX, 0 ; CHECK IF ALL DIGITS HAVE BEEN PRINTED
+    JNE PRINT_LOOP2 ; IF NOT, REPEAT THE LOOP
+    POP BX ; RESTORE BX FROM THE STACK
+    RET
 
-check_int:
-  ; check if the word is less than or equal to 5
-  mov bx, ax
-  cmp bx, 5
-  jle print_red_color
-  ret
+CHECK_INT:
+  ; CHECK IF THE WORD IS LESS THAN OR EQUAL TO 5
+  MOV BX, AX
+  CMP BX, 5
+  JLE PRINT_RED_COLOR
+  RET
 
-print_string:
-  ; Print a string of characters
-  ; Input: CX = length of string, DX = offset of string
-  push ax ; save registers
-  push bx
-  push cx
-  mov bx, dx ; set BX to the offset of the string
-  mov cx, 10 ; set the length to 10 characters
+PRINT_STRING:
+  ; PRINT A STRING OF CHARACTERS
+  ; INPUT: CX = LENGTH OF STRING, DX = OFFSET OF STRING
+  PUSH AX ; SAVE REGISTERS
+  PUSH BX
+  PUSH CX
+  MOV BX, DX ; SET BX TO THE OFFSET OF THE STRING
+  MOV CX, 10 ; SET THE LENGTH TO 10 CHARACTERS
   
-  print_loop:
-  mov dl, [bx] ; load character from memory
-  int 21h ; output the character
-  inc bx ; increment offset to next character
-  loop print_loop ; repeat until 10 characters are printed
+  PRINT_LOOP:
+  MOV DL, [BX] ; LOAD CHARACTER FROM MEMORY
+  INT 21H ; OUTPUT THE CHARACTER
+  INC BX ; INCREMENT OFFSET TO NEXT CHARACTER
+  LOOP PRINT_LOOP ; REPEAT UNTIL 10 CHARACTERS ARE PRINTED
   
-  print_done:
-  pop cx ; restore registers
-  pop bx
-  pop ax
-  ret
+  PRINT_DONE:
+  POP CX ; RESTORE REGISTERS
+  POP BX
+  POP AX
+  RET
 
-print_red_color:
-  ; Print a string of characters
-  ; Input: CX = length of string, DX = offset of string
-  push ax ; save registers
-  push bx
-  push cx
-  mov bx, dx ; set BX to the offset of the string
-  mov cx, 10 ; set the length to 10 characters 
+PRINT_RED_COLOR:
+  ; PRINT A STRING OF CHARACTERS
+  ; INPUT: CX = LENGTH OF STRING, DX = OFFSET OF STRING
+  PUSH AX ; SAVE REGISTERS
+  PUSH BX
+  PUSH CX
+  MOV BX, DX ; SET BX TO THE OFFSET OF THE STRING
+  MOV CX, 10 ; SET THE LENGTH TO 10 CHARACTERS 
   
-  print_loop3:
-    mov dl, [bx] ; load character from memory
-    mov ah, 09h
-    mov al, dl 
-    mov bl, 04h ; set background color to black with blink
-    or bl, 80h
-    int 10h
-    inc bx ; increment offset to next character
-    loop print_loop3 ; repeat until 10 characters are printed
-  print_done3:
-  pop cx ; restore registers
-  pop bx
-  pop ax
-  ret
+  PRINT_LOOP3:
+    MOV DL, [BX] ; LOAD CHARACTER FROM MEMORY
+    MOV AH, 09H
+    MOV AL, DL 
+    MOV BL, 04H ; SET BACKGROUND COLOR TO BLACK WITH BLINK
+    OR BL, 80H
+    INT 10H
+    INC BX ; INCREMENT OFFSET TO NEXT CHARACTER
+    LOOP PRINT_LOOP3 ; REPEAT UNTIL 10 CHARACTERS ARE PRINTED
+  PRINT_DONE3:
+  POP CX ; RESTORE REGISTERS
+  POP BX
+  POP AX
+  RET
 
 
-; **************Menu FUNCTIONS **************
+; **************MENU FUNCTIONS **************
 
-draw_menu:
-  ; Code to draw menu
-  call clear_screen
-  lea dx, menu
-  mov ah, 09h
-  int 21h
+DRAW_MENU:
+  ; CODE TO DRAW MENU
+  CALL CLEAR_SCREEN
+  LEA DX, MENU
+  MOV AH, 09H
+  INT 21H
   
-  lea dx, user_choice
-  mov ah, 09h
-  int 21h
-  ret
+  LEA DX, USER_CHOICE
+  MOV AH, 09H
+  INT 21H
+  RET
 
-view_inventory:
-  ;Code to view inventory 
-  mov dx, offset inventory_header
-  mov ah, 09
-  int 21h
+VIEW_INVENTORY:
+  ;CODE TO VIEW INVENTORY 
+  MOV DX, OFFSET INVENTORY_HEADER
+  MOV AH, 09
+  INT 21H
   
-  mov bp, 0
-  lea si, inventory
+  MOV BP, 0
+  LEA SI, INVENTORY
 
-  loop_start:    
+  LOOP_START:    
   
-    mov ax, [si] ; load inventory id into ax
-    cmp ax, 10 ; check if end of array
-    ja done 
-    call print_int ; print the integer
+    MOV AX, [SI] ; LOAD INVENTORY ID INTO AX
+    CMP AX, 10 ; CHECK IF END OF ARRAY
+    JA DONE 
+    CALL PRINT_INT ; PRINT THE INTEGER
 
-    call print_tab
+    CALL PRINT_TAB
 
-    mov dx, offset inventory + 20 ; load inventory name into dx     
+    MOV DX, OFFSET INVENTORY + 20 ; LOAD INVENTORY NAME INTO DX     
     
-    add dx, bp ; add bp to dx to point to the next word  
+    ADD DX, BP ; ADD BP TO DX TO POINT TO THE NEXT WORD  
     
-    call print_string ; print the string   
+    CALL PRINT_STRING ; PRINT THE STRING   
     
-    mov ax, [si + 120] ; load inventory stock into ax 
+    MOV AX, [SI + 120] ; LOAD INVENTORY STOCK INTO AX 
     
-    call check_int ; check if stock is less than or equal to 5  
+    CALL CHECK_INT ; CHECK IF STOCK IS LESS THAN OR EQUAL TO 5  
     
-    call print_tab
+    CALL PRINT_TAB
     
-    mov ax, [si + 120]  
+    MOV AX, [SI + 120]  
     
-    call print_int
+    CALL PRINT_INT
 
-    call print_double_tab
+    CALL PRINT_DOUBLE_TAB
     
-    mov ax, [si + 140]
+    MOV AX, [SI + 140]
     
-    call print_int
+    CALL PRINT_INT
     
-    add bp, 10
-    add si, 2 ; increment SI to point to the next word     
+    ADD BP, 10
+    ADD SI, 2 ; INCREMENT SI TO POINT TO THE NEXT WORD     
     
-    call print_newline_return
-    jmp loop_start ; repeat the loop for the next element
-  done:
-  ret
+    CALL PRINT_NEWLINE_RETURN
+    JMP LOOP_START ; REPEAT THE LOOP FOR THE NEXT ELEMENT
+  DONE:
+  RET
 
-restock_inventory:
-  ; Code to restock item
-  lea dx, restock_label
-  mov ah, 09h
-  int 21h 
+RESTOCK_INVENTORY:
+  ; CODE TO RESTOCK ITEM
+  LEA DX, RESTOCK_LABEL
+  MOV AH, 09H
+  INT 21H 
 
-  mov ah, 01
-  int 21h
+  MOV AH, 01
+  INT 21H
 
-  sub al, 30h 
-  add al, al
-  sub ax, 136
-  mov stock_id, ax 
+  SUB AL, 30H 
+  ADD AL, AL
+  SUB AX, 136
+  MOV STOCK_ID, AX 
 
-  lea dx, restock_amount_label
-  mov ah, 09h 
-  int 21h
+  LEA DX, RESTOCK_AMOUNT_LABEL
+  MOV AH, 09H 
+  INT 21H
 
-  mov ah, 01
-  int 21h
-  sub al, 30h
-  sub ax, 256
-  mov cx, ax
+  MOV AH, 01
+  INT 21H
+  SUB AL, 30H
+  SUB AX, 256
+  MOV CX, AX
 
-  lea si, inventory
-  add si, stock_id
-  add cx, [si]
-  mov word ptr [si], cx 
+  LEA SI, INVENTORY
+  ADD SI, STOCK_ID
+  ADD CX, [SI]
+  MOV WORD PTR [SI], CX 
   
-  call clear_screen
-  call print_newline
-  call print_asterisk
-  lea dx, restock_success
-  mov ah, 09h 
-  int 21h 
-  call print_asterisk
-  call print_newline
-  call view_inventory
-  call user_navigate
-  ret
+  CALL CLEAR_SCREEN
+  CALL PRINT_NEWLINE
+  CALL PRINT_ASTERISK
+  LEA DX, RESTOCK_SUCCESS
+  MOV AH, 09H 
+  INT 21H 
+  CALL PRINT_ASTERISK
+  CALL PRINT_NEWLINE
+  CALL VIEW_INVENTORY
+  CALL USER_NAVIGATE
+  RET
 
-sales_inventory:
-  ; Code to restock item
-  lea dx, sell_item_id_label
-  mov ah, 09h
-  int 21h 
+SALES_INVENTORY:
+  ; CODE TO RESTOCK ITEM
+  LEA DX, SELL_ITEM_ID_LABEL
+  MOV AH, 09H
+  INT 21H 
 
-  mov ah, 01
-  int 21h
+  MOV AH, 01
+  INT 21H
 
-  sub al, 30h ; convert to integer
-  add al, al ; multiply by 2
-  sub ax, 136 ; subtract 136 to get the offset
-  mov stock_id, ax 
+  SUB AL, 30H ; CONVERT TO INTEGER
+  ADD AL, AL ; MULTIPLY BY 2
+  SUB AX, 136 ; SUBTRACT 136 TO GET THE OFFSET
+  MOV STOCK_ID, AX 
 
-  lea dx, sell_item_amount_label
-  mov ah, 09h 
-  int 21h
+  LEA DX, SELL_ITEM_AMOUNT_LABEL
+  MOV AH, 09H 
+  INT 21H
 
-  mov ah, 01
-  int 21h
-  sub al, 30h
-  sub ax, 256
-  mov cx, ax
+  MOV AH, 01
+  INT 21H
+  SUB AL, 30H
+  SUB AX, 256
+  MOV CX, AX
 
-  lea si, inventory
-  add si, stock_id
-  mov bx, [si] ; load stock into bx
-  sub bx, cx
-  cmp bx, 0
-  js reset_quantity
+  LEA SI, INVENTORY
+  ADD SI, STOCK_ID
+  MOV BX, [SI] ; LOAD STOCK INTO BX
+  SUB BX, CX
+  CMP BX, 0
+  JS RESET_QUANTITY
 
-  mov word ptr [si], bx
-  jmp sold_quantity
+  MOV WORD PTR [SI], BX
+  JMP SOLD_QUANTITY
 
-  reset_quantity: 
-    mov bx, [si]
-    mov word ptr [si], bx
-    call clear_screen
-    call print_newline
-    call print_asterisk
-    lea dx, sell_item_fail
-    mov ah, 09h 
-    int 21h 
-    call print_asterisk
-    call print_newline
-    call view_inventory
-    call user_navigate
-    ret 
+  RESET_QUANTITY: 
+    MOV BX, [SI]
+    MOV WORD PTR [SI], BX
+    CALL CLEAR_SCREEN
+    CALL PRINT_NEWLINE
+    CALL PRINT_ASTERISK
+    LEA DX, SELL_ITEM_FAIL
+    MOV AH, 09H 
+    INT 21H 
+    CALL PRINT_ASTERISK
+    CALL PRINT_NEWLINE
+    CALL VIEW_INVENTORY
+    CALL USER_NAVIGATE
+    RET 
   
-  sold_quantity:
-    call sales_done
-    call clear_screen
-    call print_newline
-    call print_asterisk
-    lea dx, sell_item_success
-    mov ah, 09h 
-    int 21h 
-    call print_asterisk
-    call print_newline
-    call view_inventory
-    call user_navigate
-    ret
-  sales_done: 
-    mov ax, stock_id 
-    sub ax, 120 
-    mov stock_id, ax
-    lea si, sales 
-    add si, stock_id
-    mov ax, [si]
-    add cx, ax 
-    mov word ptr [si], cx
-    ret
-  ret
-
-sort_inventory:
-  ; Code to search item
-  call clear_screen
-  lea dx, sort_inventory_label
-  mov ah, 09h 
-  int 21h 
-  
-  mov ah, 01h 
-  int 21h 
-  
-  cmp al, '1'
-  call main_loop 
-  
-  cmp al, '2'
-  je in_stock_prompt
-  
-  cmp al, '3' 
-  je low_in_stock_prompt 
-  
-  ret
-
-in_stock_prompt:
-  call clear_screen
-  mov dx, offset inventory_header
-  mov ah, 09
-  int 21h
-  
-  mov bp, 0
-  lea si, inventory
-
-  loop_start2:
-    mov ax, [si] 
-    cmp ax, 10 
-    ja end2
-
-    mov ax, [si + 120] ; load inventory id into ax
-    cmp ax, 6 ; check if end of array
-    jl done2 
-
-    mov ax, [si]
-    call print_int ; print the integer
-
-    call print_tab
-
-    mov dx, offset inventory + 20 ; load inventory name into dx
-    add dx, bp ; add bp to dx to point to the next word
-    call print_string ; print the string
-    mov ax, [si + 120] ; load inventory stock into ax
-    call check_int ; check if stock is less than or equal to 5
-
-    call print_tab
+  SOLD_QUANTITY:
+    CALL SALES_DONE
+    CALL CLEAR_SCREEN
+    CALL PRINT_NEWLINE
+    CALL PRINT_ASTERISK
+    LEA DX, SELL_ITEM_SUCCESS
+    MOV AH, 09H 
+    INT 21H 
+    CALL PRINT_ASTERISK
+    CALL PRINT_NEWLINE
+    CALL VIEW_INVENTORY
+    CALL USER_NAVIGATE
+    RET 
     
-    mov ax, [si + 120] 
-    call print_int
+  SALES_DONE: 
+    MOV AX, STOCK_ID 
+    SUB AX, 120 
+    MOV STOCK_ID, AX
+    LEA SI, SALES 
+    ADD SI, STOCK_ID
+    MOV AX, [SI]
+    ADD CX, AX 
+    MOV WORD PTR [SI], CX
+    RET
+  RET
 
-    call print_double_tab
+SORT_INVENTORY:
+  ; CODE TO SEARCH ITEM
+  CALL CLEAR_SCREEN
+  LEA DX, SORT_INVENTORY_LABEL
+  MOV AH, 09H 
+  INT 21H 
+  
+  MOV AH, 01H 
+  INT 21H 
+  
+  CMP AL, '1'
+  CALL MAIN_LOOP 
+  
+  CMP AL, '2'
+  JE IN_STOCK_PROMPT
+  
+  CMP AL, '3' 
+  JE LOW_IN_STOCK_PROMPT 
+  
+  RET
+
+IN_STOCK_PROMPT:
+  CALL CLEAR_SCREEN
+  MOV DX, OFFSET INVENTORY_HEADER
+  MOV AH, 09
+  INT 21H
+  
+  MOV BP, 0
+  LEA SI, INVENTORY
+
+  LOOP_START2:
+    MOV AX, [SI] 
+    CMP AX, 10 
+    JA END2
+
+    MOV AX, [SI + 120] ; LOAD INVENTORY ID INTO AX
+    CMP AX, 6 ; CHECK IF END OF ARRAY
+    JL DONE2 
+
+    MOV AX, [SI]
+    CALL PRINT_INT ; PRINT THE INTEGER
+
+    CALL PRINT_TAB
+
+    MOV DX, OFFSET INVENTORY + 20 ; LOAD INVENTORY NAME INTO DX
+    ADD DX, BP ; ADD BP TO DX TO POINT TO THE NEXT WORD
+    CALL PRINT_STRING ; PRINT THE STRING
+    MOV AX, [SI + 120] ; LOAD INVENTORY STOCK INTO AX
+    CALL CHECK_INT ; CHECK IF STOCK IS LESS THAN OR EQUAL TO 5
+
+    CALL PRINT_TAB
     
-    mov ax, [si + 140]
-    call print_int
-    call print_newline
+    MOV AX, [SI + 120] 
+    CALL PRINT_INT
 
-    add bp, 10
-    add si, 2 ; increment SI to point to the next word
-    jmp loop_start2 ; repeat the loop for the next element
-  done2:
-    add bp, 10
-    add si, 2
-    jmp loop_start2
-    ret 
-  end2:
-    ret
-  ret
-
-low_in_stock_prompt:
-  call clear_screen
-  mov dx, offset inventory_header
-  mov ah, 09
-  int 21h
-  
-  mov bp, 0
-  lea si, inventory
-
-  loop_start3:
-    mov ax, [si] 
-    cmp ax, 10 
-    ja end3
-
-    mov ax, [si + 120] ; load inventory id into ax
-    cmp ax, 5 ; check if end of array
-    jg done3
-
-    mov ax, [si]
-    call print_int ; print the integer
-
-    call print_tab
-
-    mov dx, offset inventory + 20 ; load inventory name into dx
-    add dx, bp ; add bp to dx to point to the next word
-    call print_string ; print the string
-    mov ax, [si + 120] ; load inventory stock into ax
-    call check_int ; check if stock is less than or equal to 5
-
-    call print_tab
+    CALL PRINT_DOUBLE_TAB
     
-    mov ax, [si + 120] 
-    call print_int
+    MOV AX, [SI + 140]
+    CALL PRINT_INT
+    CALL PRINT_NEWLINE
 
-    call print_double_tab
+    ADD BP, 10
+    ADD SI, 2 ; INCREMENT SI TO POINT TO THE NEXT WORD
+    JMP LOOP_START2 ; REPEAT THE LOOP FOR THE NEXT ELEMENT
+  
+  DONE2:
+    ADD BP, 10
+    ADD SI, 2
+    JMP LOOP_START2
+    RET 
+  END2:
+    RET
+  RET
+
+LOW_IN_STOCK_PROMPT:
+  CALL CLEAR_SCREEN
+  MOV DX, OFFSET INVENTORY_HEADER
+  MOV AH, 09
+  INT 21H
+  
+  MOV BP, 0
+  LEA SI, INVENTORY
+
+  LOOP_START3:
+    MOV AX, [SI] 
+    CMP AX, 10 
+    JA END3
+
+    MOV AX, [SI + 120] ; LOAD INVENTORY ID INTO AX
+    CMP AX, 5 ; CHECK IF END OF ARRAY
+    JG DONE3
+
+    MOV AX, [SI]
+    CALL PRINT_INT ; PRINT THE INTEGER
+
+    CALL PRINT_TAB
+
+    MOV DX, OFFSET INVENTORY + 20 ; LOAD INVENTORY NAME INTO DX
+    ADD DX, BP ; ADD BP TO DX TO POINT TO THE NEXT WORD
+    CALL PRINT_STRING ; PRINT THE STRING
+    MOV AX, [SI + 120] ; LOAD INVENTORY STOCK INTO AX
+    CALL CHECK_INT ; CHECK IF STOCK IS LESS THAN OR EQUAL TO 5
+
+    CALL PRINT_TAB
     
-    mov ax, [si + 140]
-    call print_int
-    call print_newline
+    MOV AX, [SI + 120] 
+    CALL PRINT_INT
 
-    add bp, 10
-    add si, 2 ; increment SI to point to the next word
-    jmp loop_start3 ; repeat the loop for the next element
-  done3:
-    add bp, 10
-    add si, 2
-    jmp loop_start3
-    ret 
-  end3:
-    ret
-  ret 
+    CALL PRINT_DOUBLE_TAB
+    
+    MOV AX, [SI + 140]
+    CALL PRINT_INT
+    CALL PRINT_NEWLINE
 
-sales_report:
-  call clear_screen
-  ; Code to generate sales reports
-  mov dx, offset sales_header
-  mov ah, 09
-  int 21h
+    ADD BP, 10
+    ADD SI, 2 ; INCREMENT SI TO POINT TO THE NEXT WORD
+    JMP LOOP_START3 ; REPEAT THE LOOP FOR THE NEXT ELEMENT
+  DONE3:
+    ADD BP, 10
+    ADD SI, 2
+    JMP LOOP_START3
+    RET 
+  END3:
+    RET
+  RET 
 
-  mov bp, 0
-  lea si, inventory
-  mov bx, offset sales 
-  mov di, offset item_price 
 
-  loop_start5:
-    mov ax, [si] ; load inventory id into ax
-    cmp ax, 10 ; check if end of array
-    ja done5 
-    call print_int ; print the integer
+SALES_REPORT:
+  CALL CLEAR_SCREEN
+  ; CODE TO GENERATE SALES REPORTS
+  MOV DX, OFFSET SALES_HEADER
+  MOV AH, 09
+  INT 21H
 
-    call print_tab
+  MOV BP, 0
+  LEA SI, INVENTORY
+  MOV BX, OFFSET SALES 
+  MOV DI, OFFSET ITEM_PRICE 
 
-    mov dx, offset inventory + 20 ; load inventory name into dx
-    add dx, bp ; add bp to dx to point to the next word
-    call print_string ; print the string
+  LOOP_START5:
+    MOV AX, [SI] ; LOAD INVENTORY ID INTO AX
+    CMP AX, 10 ; CHECK IF END OF ARRAY
+    JA DONE5 
+    CALL PRINT_INT ; PRINT THE INTEGER
 
-    call print_tab
+    CALL PRINT_TAB
 
-    mov ax, [bx]
-    call print_int
+    MOV DX, OFFSET INVENTORY + 20 ; LOAD INVENTORY NAME INTO DX
+    ADD DX, BP ; ADD BP TO DX TO POINT TO THE NEXT WORD
+    CALL PRINT_STRING ; PRINT THE STRING
 
-    call print_double_tab
+    CALL PRINT_TAB
+
+    MOV AX, [BX]
+    CALL PRINT_INT
+
+    CALL PRINT_DOUBLE_TAB
   
-    mov ax, [si + 140]
-    call print_int
+    MOV AX, [SI + 140]
+    CALL PRINT_INT
   
-    call print_double_tab
+    CALL PRINT_DOUBLE_TAB
 
-    mov cx, [bx]
-    mov ax, [di]
-    mul cx
-    call print_int
+    MOV CX, [BX]
+    MOV AX, [DI]
+    MUL CX
+    CALL PRINT_INT
 
-    call print_newline
+    CALL PRINT_NEWLINE
 
-    add bp, 10
-    add si, 2 ; increment SI to point to the next word
-    add bx, 2 
-    add di, 2
-    jmp loop_start5 ; repeat the loop for the next element
-  done5:
-    ret  ; Return from the function
+    ADD BP, 10
+    ADD SI, 2 ; INCREMENT SI TO POINT TO THE NEXT WORD
+    ADD BX, 2 
+    ADD DI, 2
+    JMP LOOP_START5 ; REPEAT THE LOOP FOR THE NEXT ELEMENT
+  DONE5:
+    RET  ; RETURN FROM THE FUNCTION
 
-; ************* HELPER FUNCTIONS ***************
+;************* HELPER FUNCTIONS ***************
 
-exit_program:
-  ; Code to exit program
-  call draw_line
+EXIT_PROGRAM:
+  ; CODE TO EXIT PROGRAM
+  CALL DRAW_LINE
 
-  lea dx, user_quit
-  mov ah, 09h
-  int 21h 
+  LEA DX, USER_QUIT
+  MOV AH, 09H
+  INT 21H 
   
-  call draw_line
+  CALL DRAW_LINE
 
-  mov ah, 4ch
-  int 21h
+  MOV AH, 4CH
+  INT 21H
 
-clear_screen:
-  ; Function to clear the screen
-  mov ah, 06h
-  mov al, 0
-  mov bh, 07h
-  mov cx, 0
-  mov dx, 184Fh
-  int 10h
-  ret
+CLEAR_SCREEN:
+  ; FUNCTION TO CLEAR THE SCREEN
+  MOV AH, 06H
+  MOV AL, 0
+  MOV BH, 07H
+  MOV CX, 0
+  MOV DX, 184FH
+  INT 10H
+  RET
 
-draw_line:
-  ; Function to draw a line
-  lea dx, sline
-  mov ah, 09h
-  int 21h
-  ret
+DRAW_LINE:
+  ; FUNCTION TO DRAW A LINE
+  LEA DX, SLINE
+  MOV AH, 09H
+  INT 21H
+  RET
 
-print_tab:
-  mov dl, 09
-  mov ah, 02
-  int 21h
-  ret
+PRINT_TAB:
+  MOV DL, 09
+  MOV AH, 02
+  INT 21H
+  RET
 
-print_double_tab:
-  mov dl, 09
-  mov ah, 02
-  int 21h
+PRINT_DOUBLE_TAB:
+  MOV DL, 09
+  MOV AH, 02
+  INT 21H
 
-  mov dl, 09
-  mov ah, 02
-  int 21h
-  ret
+  MOV DL, 09
+  MOV AH, 02
+  INT 21H
+  RET
 
-print_newline:
-  mov dl, 0ah
-  mov ah, 02
-  int 21h
-  ret  
+PRINT_NEWLINE:
+  MOV DL, 0AH
+  MOV AH, 02
+  INT 21H
+  RET  
   
-print_newline_return:
-  mov dl, 0Dh ; ASCII code of carriage return (CR)
-  mov ah, 02h ; Use DOS function to print character
-  int 21h
+PRINT_NEWLINE_RETURN:
+  MOV DL, 0DH ; ASCII CODE OF CARRIAGE RETURN (CR)
+  MOV AH, 02H ; USE DOS FUNCTION TO PRINT CHARACTER
+  INT 21H
 
-  mov dl, 0Ah ; ASCII code of line feed (LF)
-  mov ah, 02h ; Use DOS function to print character
-  int 21h
+  MOV DL, 0AH ; ASCII CODE OF LINE FEED (LF)
+  MOV AH, 02H ; USE DOS FUNCTION TO PRINT CHARACTER
+  INT 21H
 
-  ret  
+  RET  
   
-print_asterisk:
-  lea dx, dotted
-  mov ah, 09h 
-  int 21h 
-  ret
+PRINT_ASTERISK:
+  LEA DX, DOTTED
+  MOV AH, 09H 
+  INT 21H 
+  RET
 
-main endp
-end main
+MAIN ENDP
+END MAIN
